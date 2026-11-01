@@ -1,0 +1,947 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Audize - Music Player</title>
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <link rel="stylesheet" href="src/style.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
+  </head>
+  <body>
+    <!-- ============ UPLOAD SCREEN ============ -->
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="loading-screen">
+      <div class="loading-content">
+        <img
+          src="favicon.png"
+          alt=""
+          width="48"
+          height="48"
+          style="border-radius: 12px; opacity: 0.8"
+        />
+        <div class="loading-spinner"></div>
+        <p class="loading-text">Carregando...</p>
+      </div>
+    </div>
+
+    <!-- Upload Screen -->
+    <div id="upload-screen" class="hidden">
+      <div class="upload-container">
+        <div class="upload-icon">
+          <img src="favicon.png" alt="Audize" width="80" height="80" style="border-radius: 18px" />
+        </div>
+        <h1 class="upload-title">Audize</h1>
+        <p class="upload-subtitle">Carregue suas músicas e veja a mágica acontecer</p>
+        <div id="drop-zone" class="drop-zone">
+          <svg
+            class="drop-icon"
+            viewBox="0 0 24 24"
+            width="48"
+            height="48"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+          >
+            <path d="M12 16V4m0 0L8 8m4-4l4 4" stroke-linecap="round" stroke-linejoin="round" />
+            <path
+              d="M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+          <p>Arraste seus arquivos de áudio aqui</p>
+          <span class="drop-or">ou</span>
+          <button id="upload-btn" class="upload-button">Escolher Arquivos</button>
+          <input type="file" id="file-input" accept="audio/*" multiple hidden />
+          <p class="drop-hint">MP3, WAV, FLAC, OGG, M4A — Selecione vários de uma vez!</p>
+        </div>
+        <div class="upload-features">
+          <div class="upload-feature">
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
+              <polyline points="17 21 17 13 7 13 7 21" />
+              <polyline points="7 3 7 8 15 8" />
+            </svg>
+            <span>Salva automaticamente no navegador</span>
+          </div>
+          <div class="upload-feature">
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0110 0v4" />
+            </svg>
+            <span>Dados nunca saem do seu computador</span>
+          </div>
+          <div class="upload-feature">
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+            <span>Visualizer de áudio em tempo real</span>
+          </div>
+        </div>
+      </div>
+      <div class="upload-particles" id="upload-particles"></div>
+    </div>
+
+    <!-- ============ PLAYER SCREEN ============ -->
+    <div id="player-screen" class="hidden">
+      <!-- Background com capa -->
+      <div id="bg-cover" class="bg-cover"></div>
+      <div class="bg-overlay"></div>
+
+      <div class="player-layout">
+        <!-- Card do Player -->
+        <div class="player-card">
+          <div class="player-columns">
+            <!-- LEFT COLUMN: Cover + Info + Controls -->
+            <div class="player-left">
+              <!-- Capa -->
+              <div class="cover-wrapper">
+                <div id="cover-container" class="cover-container">
+                  <img id="cover-art" class="cover-art" src="" alt="Cover" />
+                  <div class="cover-glow" id="cover-glow"></div>
+                </div>
+                <div class="cover-spin-ring"></div>
+              </div>
+
+              <!-- Info da música -->
+              <div class="song-info">
+                <h2 id="song-title" class="song-title">—</h2>
+                <p id="song-artist" class="song-artist">Artista Desconhecido</p>
+                <div id="meta-tags" class="meta-tags">
+                  <span id="meta-album" class="meta-tag">Álbum desconhecido</span>
+                  <span id="meta-year" class="meta-tag">—</span>
+                  <span id="meta-genre" class="meta-tag">—</span>
+                </div>
+              </div>
+
+              <!-- Controles -->
+              <div class="controls">
+                <button id="shuffle-btn" class="ctrl-btn small" title="Aleatório">
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="18"
+                    height="18"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <polyline points="16 3 21 3 21 8" />
+                    <line x1="4" y1="20" x2="21" y2="3" />
+                    <polyline points="21 16 21 21 16 21" />
+                    <line x1="15" y1="15" x2="21" y2="21" />
+                    <line x1="4" y1="4" x2="9" y2="9" />
+                  </svg>
+                </button>
+                <button id="prev-btn" class="ctrl-btn nav-btn" title="Anterior">
+                  <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+                    <polygon points="19,20 9,12 19,4" />
+                    <rect x="5" y="4" width="2" height="16" rx="0.5" />
+                  </svg>
+                </button>
+                <button id="play-btn" class="ctrl-btn play-btn" title="Play/Pause">
+                  <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
+                    <polygon points="8,5 20,12 8,19" id="play-icon" />
+                    <rect x="7" y="6" width="4" height="12" rx="1" id="pause-icon" class="hidden" />
+                    <rect
+                      x="13"
+                      y="6"
+                      width="4"
+                      height="12"
+                      rx="1"
+                      id="pause-icon2"
+                      class="hidden"
+                    />
+                  </svg>
+                </button>
+                <button id="next-btn" class="ctrl-btn nav-btn" title="Próxima">
+                  <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+                    <polygon points="5,4 15,12 5,20" />
+                    <rect x="17" y="4" width="2" height="16" rx="0.5" />
+                  </svg>
+                </button>
+                <button id="repeat-btn" class="ctrl-btn small" title="Modo repetição">
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="20"
+                    height="20"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <polyline points="17 1 21 5 17 9" id="repeat-icon" />
+                    <path d="M3 11V9a4 4 0 014-4h14" />
+                    <polyline points="7 23 3 19 7 15" id="repeat-icon2" />
+                    <path d="M21 13v2a4 4 0 01-4 4H3" />
+                    <text
+                      x="12"
+                      y="16"
+                      font-size="9"
+                      text-anchor="middle"
+                      fill="currentColor"
+                      stroke="none"
+                      id="repeat-one"
+                      class="hidden"
+                    >
+                      1
+                    </text>
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Seek bar -->
+              <div class="seek-container">
+                <span id="current-time" class="time">0:00</span>
+                <input
+                  type="range"
+                  id="seek-bar"
+                  class="seek-bar"
+                  value="0"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                />
+                <span id="duration" class="time">0:00</span>
+              </div>
+
+              <!-- Volume -->
+              <div class="volume-container">
+                <button id="mute-btn" class="ctrl-btn small" title="Mudo">
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="18"
+                    height="18"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <polygon points="11,5 6,9 2,9 2,15 6,15 11,19" id="vol-icon" />
+                    <path d="M15.54 8.46a5 5 0 010 7.07" id="vol-wave1" />
+                    <path d="M19.07 4.93a10 10 0 010 14.14" id="vol-wave2" />
+                    <line
+                      x1="22"
+                      y1="2"
+                      x2="2"
+                      y2="22"
+                      id="vol-mute"
+                      class="hidden"
+                      stroke-linecap="round"
+                    />
+                  </svg>
+                </button>
+                <input
+                  type="range"
+                  id="volume-bar"
+                  class="volume-bar"
+                  value="80"
+                  min="0"
+                  max="100"
+                />
+                <button id="back-btn" class="ctrl-btn small" title="Adicionar músicas">
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="18"
+                    height="18"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path d="M12 5v14m-7-7h14" stroke-linecap="round" />
+                  </svg>
+                </button>
+                <button id="eq-toggle-btn" class="ctrl-btn small" title="Equalizador">
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="18"
+                    height="18"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <rect x="4" y="6" width="4" height="12" rx="1" />
+                    <rect x="10" y="3" width="4" height="18" rx="1" />
+                    <rect x="16" y="8" width="4" height="8" rx="1" />
+                  </svg>
+                </button>
+                <button id="shortcuts-btn" class="ctrl-btn small" title="Atalhos de teclado">
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="16"
+                    height="16"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <rect x="2" y="4" width="20" height="16" rx="2" />
+                    <path d="M6 8h2l2 4-2 4H6" stroke-linecap="round" />
+                    <path d="M12 8h2l2 4-2 4h-2" stroke-linecap="round" />
+                  </svg>
+                </button>
+                <button id="theme-btn" class="ctrl-btn small" title="Tema">
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="16"
+                    height="16"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <circle cx="12" cy="12" r="3" />
+                    <path
+                      d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
+                      stroke-linecap="round"
+                    />
+                  </svg>
+                </button>
+                <div class="theme-dropdown" id="theme-dropdown">
+                  <button class="theme-option active" data-theme="neon">
+                    <span
+                      class="theme-swatch"
+                      style="background: linear-gradient(135deg, #00d4ff, #7b2ff7)"
+                    ></span>
+                    Neon
+                    <svg
+                      class="theme-check"
+                      viewBox="0 0 24 24"
+                      width="14"
+                      height="14"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                    >
+                      <polyline
+                        points="20 6 9 17 4 12"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </button>
+                  <button class="theme-option" data-theme="forest">
+                    <span
+                      class="theme-swatch"
+                      style="background: linear-gradient(135deg, #00e676, #ffd740)"
+                    ></span>
+                    Forest
+                    <svg
+                      class="theme-check"
+                      viewBox="0 0 24 24"
+                      width="14"
+                      height="14"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                    >
+                      <polyline
+                        points="20 6 9 17 4 12"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </button>
+                  <button class="theme-option" data-theme="sunset">
+                    <span
+                      class="theme-swatch"
+                      style="background: linear-gradient(135deg, #ff6d00, #ff1744)"
+                    ></span>
+                    Sunset
+                    <svg
+                      class="theme-check"
+                      viewBox="0 0 24 24"
+                      width="14"
+                      height="14"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                    >
+                      <polyline
+                        points="20 6 9 17 4 12"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </button>
+                  <button class="theme-option" data-theme="ocean">
+                    <span
+                      class="theme-swatch"
+                      style="background: linear-gradient(135deg, #00bcd4, #2979ff)"
+                    ></span>
+                    Ocean
+                    <svg
+                      class="theme-check"
+                      viewBox="0 0 24 24"
+                      width="14"
+                      height="14"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                    >
+                      <polyline
+                        points="20 6 9 17 4 12"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </button>
+                  <button class="theme-option" data-theme="lavender">
+                    <span
+                      class="theme-swatch"
+                      style="background: linear-gradient(135deg, #b388ff, #e040fb)"
+                    ></span>
+                    Lavender
+                    <svg
+                      class="theme-check"
+                      viewBox="0 0 24 24"
+                      width="14"
+                      height="14"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                    >
+                      <polyline
+                        points="20 6 9 17 4 12"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- RIGHT COLUMN: Visualizer + EQ + Meta + Playlist -->
+            <div class="player-right">
+              <!-- Visualizer -->
+              <div class="visualizer-wrapper">
+                <canvas id="visualizer" class="visualizer"></canvas>
+                <button id="viz-mode-btn" class="viz-mode-btn" title="Alternar visualizer">
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="14"
+                    height="14"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <rect x="3" y="7" width="3" height="10" rx="0.5" id="viz-bar-icon" />
+                    <rect x="8" y="5" width="3" height="14" rx="0.5" />
+                    <rect x="13" y="8" width="3" height="8" rx="0.5" />
+                    <rect x="18" y="4" width="3" height="16" rx="0.5" />
+                    <circle cx="12" cy="12" r="5" id="viz-circle-icon" class="hidden" fill="none" />
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="2"
+                      id="viz-circle-dot"
+                      class="hidden"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Metadados extras -->
+              <div id="extra-meta" class="extra-meta hidden">
+                <div class="meta-divider"></div>
+                <div class="meta-grid">
+                  <div class="meta-item">
+                    <span class="meta-label">Taxa de amostragem</span>
+                    <span id="meta-samplerate" class="meta-value">—</span>
+                  </div>
+                  <div class="meta-item">
+                    <span class="meta-label">Bitrate</span>
+                    <span id="meta-bitrate" class="meta-value">—</span>
+                  </div>
+                  <div class="meta-item">
+                    <span class="meta-label">Canais</span>
+                    <span id="meta-channels" class="meta-value">—</span>
+                  </div>
+                  <div class="meta-item">
+                    <span class="meta-label">Formato</span>
+                    <span id="meta-format" class="meta-value">—</span>
+                  </div>
+                  <div class="meta-item">
+                    <span class="meta-label">Faixa</span>
+                    <span id="meta-track" class="meta-value">—</span>
+                  </div>
+                  <div class="meta-item">
+                    <span class="meta-label">Duração</span>
+                    <span id="meta-duration" class="meta-value">—</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Playlist -->
+              <div id="playlist-section" class="playlist-section hidden">
+                <div class="meta-divider"></div>
+                <button id="playlist-toggle" class="playlist-toggle">
+                  <svg
+                    class="pl-icon"
+                    viewBox="0 0 24 24"
+                    width="16"
+                    height="16"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path d="M9 18V5l12-2v13" stroke-linecap="round" stroke-linejoin="round" />
+                    <circle cx="6" cy="18" r="3" />
+                    <circle cx="18" cy="16" r="3" />
+                  </svg>
+                  <span class="pl-label">Playlist</span>
+                  <span id="playlist-count" class="pl-count">0 músicas</span>
+                  <svg
+                    class="pl-chevron"
+                    viewBox="0 0 24 24"
+                    width="16"
+                    height="16"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <polyline
+                      points="6 9 12 15 18 9"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </button>
+                <div class="pl-storage-row">
+                  <span id="storage-info" class="pl-storage-info"></span>
+                  <div class="pl-actions-right">
+                    <div class="pl-sort-wrap">
+                      <button id="sort-btn" class="pl-sort-btn" title="Ordenar playlist">
+                        <svg
+                          viewBox="0 0 24 24"
+                          width="12"
+                          height="12"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <path d="M11 5h10M11 9h7M11 13h4" />
+                          <path d="M3 17l3 3 3-3" />
+                          <path d="M6 18V4" />
+                        </svg>
+                        <span id="sort-label" class="pl-sort-label">Original</span>
+                        <svg
+                          class="pl-sort-chevron"
+                          viewBox="0 0 24 24"
+                          width="10"
+                          height="10"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2.5"
+                        >
+                          <polyline points="6 9 12 15 18 9" />
+                        </svg>
+                      </button>
+                      <div id="sort-dropdown" class="pl-sort-dropdown hidden">
+                        <button class="pl-sort-option active" data-sort="original">
+                          <svg
+                            viewBox="0 0 24 24"
+                            width="12"
+                            height="12"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                          >
+                            <path d="M3 12h18M3 6h18M3 18h18" />
+                          </svg>
+                          Ordem original
+                        </button>
+                        <button class="pl-sort-option" data-sort="title-asc">
+                          <svg
+                            viewBox="0 0 24 24"
+                            width="12"
+                            height="12"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                          >
+                            <path d="M12 20V4M5 11l7-7 7 7" />
+                          </svg>
+                          Título (A→Z)
+                        </button>
+                        <button class="pl-sort-option" data-sort="title-desc">
+                          <svg
+                            viewBox="0 0 24 24"
+                            width="12"
+                            height="12"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                          >
+                            <path d="M12 4v16M5 13l7 7 7-7" />
+                          </svg>
+                          Título (Z→A)
+                        </button>
+                        <button class="pl-sort-option" data-sort="duration-asc">
+                          <svg
+                            viewBox="0 0 24 24"
+                            width="12"
+                            height="12"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                          >
+                            <circle cx="12" cy="12" r="9" />
+                            <path d="M12 7v5l3 3" />
+                          </svg>
+                          Duração (curta→longa)
+                        </button>
+                        <button class="pl-sort-option" data-sort="duration-desc">
+                          <svg
+                            viewBox="0 0 24 24"
+                            width="12"
+                            height="12"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                          >
+                            <circle cx="12" cy="12" r="9" />
+                            <path d="M12 7v5l3 3" />
+                          </svg>
+                          Duração (longa→curta)
+                        </button>
+                        <button class="pl-sort-option" data-sort="date-asc">
+                          <svg
+                            viewBox="0 0 24 24"
+                            width="12"
+                            height="12"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                          >
+                            <rect x="3" y="4" width="18" height="18" rx="2" />
+                            <path d="M16 2v4M8 2v4M3 10h18" />
+                          </svg>
+                          Mais antigos primeiro
+                        </button>
+                        <button class="pl-sort-option" data-sort="date-desc">
+                          <svg
+                            viewBox="0 0 24 24"
+                            width="12"
+                            height="12"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                          >
+                            <rect x="3" y="4" width="18" height="18" rx="2" />
+                            <path d="M16 2v4M8 2v4M3 10h18" />
+                          </svg>
+                          Mais recentes primeiro
+                        </button>
+                      </div>
+                    </div>
+                    <button
+                      id="clear-playlist-btn"
+                      class="pl-clear-btn"
+                      title="Limpar playlist salva"
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        width="12"
+                        height="12"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <polyline
+                          points="3 6 5 6 21 6"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                        <path
+                          d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                      Limpar
+                    </button>
+                  </div>
+                </div>
+                <div id="playlist-container" class="playlist-container">
+                  <div class="playlist-search">
+                    <svg
+                      class="pl-search-icon"
+                      viewBox="0 0 24 24"
+                      width="14"
+                      height="14"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <circle cx="11" cy="11" r="7" />
+                      <path d="M16.5 16.5L21 21" stroke-linecap="round" />
+                    </svg>
+                    <input
+                      type="text"
+                      id="playlist-search-input"
+                      class="pl-search-input"
+                      placeholder="Buscar música..."
+                      autocomplete="off"
+                    />
+                    <button
+                      id="pl-search-clear"
+                      class="pl-search-clear hidden"
+                      title="Limpar busca"
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        width="14"
+                        height="14"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round" />
+                      </svg>
+                    </button>
+                  </div>
+                  <div id="playlist-list" class="playlist-list"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Keyboard Shortcuts Modal -->
+    <div id="shortcuts-modal" class="shortcuts-modal hidden">
+      <div class="shortcuts-overlay" id="shortcuts-overlay"></div>
+      <div class="shortcuts-box">
+        <div class="shortcuts-header">
+          <h2 class="shortcuts-title">
+            <svg
+              viewBox="0 0 24 24"
+              width="20"
+              height="20"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <rect x="2" y="4" width="20" height="16" rx="2" />
+              <path d="M6 8h2l2 4-2 4H6" stroke-linecap="round" />
+              <path d="M12 8h2l2 4-2 4h-2" stroke-linecap="round" />
+            </svg>
+            Atalhos de Teclado
+          </h2>
+          <button id="shortcuts-close" class="shortcuts-close" title="Fechar">
+            <svg
+              viewBox="0 0 24 24"
+              width="20"
+              height="20"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round" />
+            </svg>
+          </button>
+        </div>
+        <div class="shortcuts-body">
+          <div class="shortcuts-group">
+            <h3 class="shortcuts-group-title">Reprodução</h3>
+            <div class="shortcuts-row">
+              <kbd class="sc-key">Espaço</kbd
+              ><span class="sc-action">Play / Pausar (ou abrir seletor no upload)</span>
+            </div>
+            <div class="shortcuts-row">
+              <kbd class="sc-key">←</kbd
+              ><span class="sc-action">Reiniciar (se &gt;3s) ou faixa anterior</span>
+            </div>
+            <div class="shortcuts-row">
+              <kbd class="sc-key">→</kbd><span class="sc-action">Próxima faixa</span>
+            </div>
+          </div>
+          <div class="shortcuts-group">
+            <h3 class="shortcuts-group-title">Controles</h3>
+            <div class="shortcuts-row">
+              <kbd class="sc-key">R</kbd><span class="sc-action">Ciclar modo repetição</span>
+            </div>
+            <div class="shortcuts-row">
+              <kbd class="sc-key">S</kbd><span class="sc-action">Ativar / Desativar aleatório</span>
+            </div>
+            <div class="shortcuts-row">
+              <kbd class="sc-key">E</kbd><span class="sc-action">Abrir / Fechar equalizador</span>
+            </div>
+            <div class="shortcuts-row">
+              <kbd class="sc-key">?</kbd><span class="sc-action">Abrir / Fechar este modal</span>
+            </div>
+            <div class="shortcuts-row">
+              <kbd class="sc-key">Esc</kbd
+              ><span class="sc-action">Fechar qualquer overlay aberto</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Equalizer Modal -->
+    <div id="eq-modal" class="eq-modal hidden">
+      <div class="eq-overlay" id="eq-overlay"></div>
+      <div class="eq-modal-box">
+        <div class="eq-modal-header">
+          <h2 class="eq-modal-title">
+            <svg
+              viewBox="0 0 24 24"
+              width="20"
+              height="20"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <rect x="4" y="6" width="4" height="12" rx="1" />
+              <rect x="10" y="3" width="4" height="18" rx="1" />
+              <rect x="16" y="8" width="4" height="8" rx="1" />
+            </svg>
+            Equalizador
+          </h2>
+          <button id="eq-close" class="eq-close" title="Fechar">
+            <svg
+              viewBox="0 0 24 24"
+              width="20"
+              height="20"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round" />
+            </svg>
+          </button>
+        </div>
+        <div class="eq-container">
+          <div class="eq-band">
+            <span class="eq-label">Graves</span>
+            <div class="eq-slider-wrap">
+              <input
+                type="range"
+                id="eq-bass"
+                class="eq-slider"
+                value="0"
+                min="-12"
+                max="12"
+                step="0.5"
+              />
+              <div class="eq-track">
+                <div class="eq-fill" id="eq-bass-fill"></div>
+              </div>
+            </div>
+            <span id="eq-bass-val" class="eq-value">0 dB</span>
+          </div>
+          <div class="eq-band">
+            <span class="eq-label">Médios</span>
+            <div class="eq-slider-wrap">
+              <input
+                type="range"
+                id="eq-mid"
+                class="eq-slider"
+                value="0"
+                min="-12"
+                max="12"
+                step="0.5"
+              />
+              <div class="eq-track">
+                <div class="eq-fill" id="eq-mid-fill"></div>
+              </div>
+            </div>
+            <span id="eq-mid-val" class="eq-value">0 dB</span>
+          </div>
+          <div class="eq-band">
+            <span class="eq-label">Agudos</span>
+            <div class="eq-slider-wrap">
+              <input
+                type="range"
+                id="eq-treble"
+                class="eq-slider"
+                value="0"
+                min="-12"
+                max="12"
+                step="0.5"
+              />
+              <div class="eq-track">
+                <div class="eq-fill" id="eq-treble-fill"></div>
+              </div>
+            </div>
+            <span id="eq-treble-val" class="eq-value">0 dB</span>
+          </div>
+        </div>
+        <button id="eq-reset-btn" class="eq-reset-btn">
+          <svg
+            viewBox="0 0 24 24"
+            width="16"
+            height="16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path d="M1 4v6h6" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M3.51 15a9 9 0 102.13-9.36L1 10" />
+          </svg>
+          Resetar
+        </button>
+      </div>
+    </div>
+
+    <!-- Confirm Modal -->
+    <div id="confirm-modal" class="confirm-modal hidden">
+      <div class="confirm-overlay" id="confirm-overlay"></div>
+      <div class="confirm-box">
+        <div class="confirm-icon">
+          <svg
+            viewBox="0 0 24 24"
+            width="28"
+            height="28"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" stroke-linecap="round" />
+            <line x1="12" y1="16" x2="12.01" y2="16" stroke-linecap="round" />
+          </svg>
+        </div>
+        <h3 id="confirm-title" class="confirm-title">Tem certeza?</h3>
+        <p id="confirm-message" class="confirm-message">Essa ação não pode ser desfeita.</p>
+        <div class="confirm-actions">
+          <button id="confirm-cancel" class="confirm-btn confirm-cancel">Cancelar</button>
+          <button id="confirm-ok" class="confirm-btn confirm-ok">Confirmar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Audio Container (audio element created dynamically) -->
+    <div id="audio-container"></div>
+
+    <script src="src/script.js"></script>
+  </body>
+</html>

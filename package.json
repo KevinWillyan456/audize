@@ -1,0 +1,13 @@
+{
+  "name": "audize",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "format": "pnpm dlx prettier . --write",
+    "format:check": "pnpm dlx prettier . --check"
+  },
+  "type": "module",
+  "devDependencies": {
+    "prettier": "^3.9.6"
+  }
+}
